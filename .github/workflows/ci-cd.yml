@@ -9,14 +9,14 @@ on:
 
 jobs:
   build-test-lint:
-    name: 🧪 Lint & Test
+    name: 🧪 Lint, Test & Validate
     runs-on: ubuntu-latest
 
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
         with:
-          lfs: true  # Important if model files are stored with Git LFS
+          lfs: true  # Required if you store model files with Git LFS
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -27,17 +27,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest ruff
+          pip install pytest ruff httpx
+
+      - name: 🧰 Set PYTHONPATH for imports
+        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
 
       - name: 🧼 Lint with Ruff
         run: ruff check .
 
+      - name: 🧪 Run tests with Pytest
+        run: pytest -v
+
       - name: 🧰 Debug - List workspace files
         run: ls -la
-
-      - name: 🧪 Run tests with Pytest
-        run: pytest
-
 
   docker-build-push:
     name: 🐳 Build & Push Docker Image
