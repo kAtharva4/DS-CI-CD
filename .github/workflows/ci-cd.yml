@@ -68,5 +68,5 @@ jobs:
 
       - name: 📤 Push Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
+          IMAGE_NAME=ghcr.io/${{ github.repository | lower}}:latest
           docker push $IMAGE_NAME
