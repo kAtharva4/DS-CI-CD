@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 # FIX 1: Import fix for ModuleNotFoundError
 from app.main import app 
