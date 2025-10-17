@@ -1,4 +1,11 @@
 import streamlit as st
+
+# ✅ MUST be at the top — Fixes the `set_page_config()` error
+st.set_page_config(
+    page_title="McDonald's Sentiment Analysis Dashboard",
+    layout="wide"
+)
+
 import pandas as pd
 import joblib
 import shap
@@ -13,24 +20,18 @@ from sklearn.metrics import accuracy_score, classification_report
 # -------------------------------
 @st.cache_resource
 def load_model():
-    model = joblib.load("best_mcdonalds_sentiment_model_fixed.pkl")
-    return model
+    try:
+        model = joblib.load("best_mcdonalds_sentiment_model_fixed.pkl")
+        return model
+    except Exception as e:
+        st.error(f"❌ Failed to load model: {e}")
+        return None
 
 model = load_model()
 
-# If the model has vectorizer or pipeline structure
-# e.g., model = Pipeline([('tfidf', TfidfVectorizer()), ('clf', LogisticRegression())])
-# This code assumes model has .predict and .predict_proba methods.
-
 # -------------------------------
-# Streamlit App Configuration
+# Sidebar Navigation
 # -------------------------------
-st.set_page_config(
-    page_title="McDonald's Sentiment Analysis Dashboard",
-    layout="wide"
-)
-
-# Sidebar navigation
 page = st.sidebar.radio(
     "📑 Navigation",
     [
@@ -120,7 +121,7 @@ elif page == "3️⃣ Models & Comparison":
     After evaluation, the best-performing model was selected and saved as a `.pkl` file.
     """)
 
-    # Dummy accuracy for other models (example)
+    # Example results
     results = {
         "Logistic Regression": 0.94,
         "Naive Bayes": 0.89,
@@ -139,29 +140,32 @@ elif page == "3️⃣ Models & Comparison":
 elif page == "4️⃣ Predictions, LIME & SHAP":
     st.title("🔮 Predictions, LIME & SHAP Explainability")
 
-    st.subheader("Enter a Customer Review")
-    user_input = st.text_area("✍️ Type a review here", "The burger was amazing and fresh!")
+    if model is None:
+        st.warning("⚠️ Model not loaded. Please check your `.pkl` file.")
+    else:
+        st.subheader("Enter a Customer Review")
+        user_input = st.text_area("✍️ Type a review here", "The burger was amazing and fresh!")
 
-    if st.button("Predict Sentiment"):
-        prediction = model.predict([user_input])[0]
-        probas = model.predict_proba([user_input])[0]
+        if st.button("Predict Sentiment"):
+            prediction = model.predict([user_input])[0]
+            probas = model.predict_proba([user_input])[0]
 
-        st.write(f"**Prediction:** {prediction}")
-        st.write(f"**Confidence:** {np.max(probas)*100:.2f}%")
+            st.write(f"**Prediction:** {prediction}")
+            st.write(f"**Confidence:** {np.max(probas)*100:.2f}%")
 
-        # LIME explanation
-        st.subheader("LIME Explanation")
-        explainer = LimeTextExplainer(class_names=["Negative", "Positive"])
-        exp = explainer.explain_instance(user_input, model.predict_proba, num_features=5)
-        st.components.v1.html(exp.as_html(), height=400)
+            # LIME explanation
+            st.subheader("LIME Explanation")
+            explainer = LimeTextExplainer(class_names=["Negative", "Positive"])
+            exp = explainer.explain_instance(user_input, model.predict_proba, num_features=5)
+            st.components.v1.html(exp.as_html(), height=400)
 
-        # SHAP explanation
-        st.subheader("SHAP Explanation")
-        explainer_shap = shap.Explainer(model.predict_proba, masker=shap.maskers.Text())
-        shap_values = explainer_shap([user_input])
-        st.set_option('deprecation.showPyplotGlobalUse', False)
-        shap.plots.text(shap_values[0])
-        st.pyplot(bbox_inches='tight')
+            # SHAP explanation
+            st.subheader("SHAP Explanation")
+            explainer_shap = shap.Explainer(model.predict_proba, masker=shap.maskers.Text())
+            shap_values = explainer_shap([user_input])
+            st.set_option('deprecation.showPyplotGlobalUse', False)
+            shap.plots.text(shap_values[0])
+            st.pyplot(bbox_inches='tight')
 
 # -------------------------------
 # 5️⃣ Insights & Real-World Impact
