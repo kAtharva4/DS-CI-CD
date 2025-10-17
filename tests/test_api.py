@@ -50,3 +50,4 @@ def test_predict_endpoint_invalid_payload():
     response = client.post("/predict", json=invalid_payload)
     # Should return 422 Unprocessable Entity (Pydantic validation error)
     assert response.status_code == 422
+    
