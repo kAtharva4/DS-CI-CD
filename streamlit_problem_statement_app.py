@@ -1,6 +1,6 @@
 import streamlit as st
 
-# ✅ MUST be at the top — Fixes the `set_page_config()` error
+# ✅ MUST be the first Streamlit command
 st.set_page_config(
     page_title="McDonald's Sentiment Analysis Dashboard",
     layout="wide"
@@ -121,7 +121,7 @@ elif page == "3️⃣ Models & Comparison":
     After evaluation, the best-performing model was selected and saved as a `.pkl` file.
     """)
 
-    # Example results
+    # Example results (replace with real values if needed)
     results = {
         "Logistic Regression": 0.94,
         "Naive Bayes": 0.89,
@@ -147,25 +147,40 @@ elif page == "4️⃣ Predictions, LIME & SHAP":
         user_input = st.text_area("✍️ Type a review here", "The burger was amazing and fresh!")
 
         if st.button("Predict Sentiment"):
-            prediction = model.predict([user_input])[0]
-            probas = model.predict_proba([user_input])[0]
+            try:
+                # ✅ Change here: wrap user_input in a DataFrame with correct column name
+                # Make sure to replace "review_text" below with the exact column name used during training
+                input_df = pd.DataFrame({"review_text": [user_input]})
 
-            st.write(f"**Prediction:** {prediction}")
-            st.write(f"**Confidence:** {np.max(probas)*100:.2f}%")
+                prediction = model.predict(input_df)[0]
+                probas = model.predict_proba(input_df)[0]
 
-            # LIME explanation
-            st.subheader("LIME Explanation")
-            explainer = LimeTextExplainer(class_names=["Negative", "Positive"])
-            exp = explainer.explain_instance(user_input, model.predict_proba, num_features=5)
-            st.components.v1.html(exp.as_html(), height=400)
+                st.write(f"**Prediction:** {prediction}")
+                st.write(f"**Confidence:** {np.max(probas)*100:.2f}%")
 
-            # SHAP explanation
-            st.subheader("SHAP Explanation")
-            explainer_shap = shap.Explainer(model.predict_proba, masker=shap.maskers.Text())
-            shap_values = explainer_shap([user_input])
-            st.set_option('deprecation.showPyplotGlobalUse', False)
-            shap.plots.text(shap_values[0])
-            st.pyplot(bbox_inches='tight')
+                # LIME explanation
+                st.subheader("LIME Explanation")
+                explainer = LimeTextExplainer(class_names=["Negative", "Positive"])
+                exp = explainer.explain_instance(
+                    user_input, 
+                    lambda x: model.predict_proba(pd.DataFrame({"review_text": x})), 
+                    num_features=5
+                )
+                st.components.v1.html(exp.as_html(), height=400)
+
+                # SHAP explanation
+                st.subheader("SHAP Explanation")
+                explainer_shap = shap.Explainer(
+                    lambda x: model.predict_proba(pd.DataFrame({"review_text": x})),
+                    masker=shap.maskers.Text()
+                )
+                shap_values = explainer_shap([user_input])
+                st.set_option('deprecation.showPyplotGlobalUse', False)
+                shap.plots.text(shap_values[0])
+                st.pyplot(bbox_inches='tight')
+
+            except Exception as e:
+                st.error(f"❌ Prediction failed: {e}")
 
 # -------------------------------
 # 5️⃣ Insights & Real-World Impact
