@@ -1,0 +1,79 @@
+# ------------------------------------
+# General Python Files
+# ------------------------------------
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+dist/
+wheels/
+*.egg-info/
+*.tar.gz
+*.whl
+
+# ------------------------------------
+# Virtual Environments
+# ------------------------------------
+venv/
+env/
+/bin/
+/include/
+/lib/
+/share/
+*.bak
+*.dist-info/
+
+# ------------------------------------
+# Python Testing and Coverage
+# ------------------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+.nox/
+
+# ------------------------------------
+# IDE and Editor Files
+# ------------------------------------
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Windows thumbs
+Thumbs.db
+*.DS_Store
+
+# ------------------------------------
+# Data Science & Machine Learning
+# ------------------------------------
+# Large data files that should not be tracked unless specifically added via LFS
+# Note: Your model file 'best_sentiment_model.pkl' is likely large.
+# If you are NOT using Git LFS, you MUST uncomment this line to ignore it:
+# best_sentiment_model.pkl
+
+# Other common data formats to ignore
+data/
+output/
+tmp/
+*.csv
+*.xls
+*.xlsx
+*.parquet
+
+# ------------------------------------
+# Docker Artifacts
+# ------------------------------------
+# Ignore temporary build files and volumes
+.dockerignore
+!Dockerfile
+.docker
+
+# ------------------------------------
+# Logs and Runtime Files
+# ------------------------------------
+*.log
