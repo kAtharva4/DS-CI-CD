@@ -2,11 +2,8 @@ import streamlit as st
 import pandas as pd
 import joblib
 import shap
-import lime
-from lime.lime_text import LimeTextExplainer
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import accuracy_score, classification_report
 
 # ✅ MUST be the first Streamlit command
 st.set_page_config(
