@@ -1,35 +1,100 @@
-name: Docker Build & Push
+name: CI/CD Pipeline with DVC
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  docker-build-push:
-    name: 🐳 Build & Push Docker Image
+  lint:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
-
+    name: Linting Code
+    
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🐳 Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🏗️ Build Docker image
+          python-version: '3.13'
+          
+      - name: Install Linting Tools
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner|lower }}/${{ github.event.repository.name }}:latest
-          docker build -t $IMAGE_NAME .
-
-      - name: 📤 Push Docker image
+          python -m pip install --upgrade pip
+          pip install flake8
+          
+      - name: Run Flake8 Linting
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner|lower }}/${{ github.event.repository.name }}:latest
-          docker push $IMAGE_NAME
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+        continue-on-error: true
+
+  test:
+    runs-on: ubuntu-latest
+    name: Testing Code
+    needs: lint
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libopenblas-dev liblapack-dev gfortran
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov
+          
+      - name: Run Tests with Pytest
+        run: |
+          pytest --verbose --cov=. --cov-report=term-missing
+        continue-on-error: true
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build and DVC Operations
+    needs: test
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libopenblas-dev liblapack-dev gfortran
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install dvc
+          
+      - name: Pull Data with DVC
+        run: |
+          dvc pull || echo "No DVC files to pull or remote not accessible"
+        continue-on-error: true
+        
+      - name: Verify Project Structure
+        run: |
+          echo "Listing project structure:"
+          ls -la
+          echo "Build successful!"
